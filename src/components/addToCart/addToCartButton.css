@@ -1,0 +1,33 @@
+.add-to-cart-btn {
+    background: linear-gradient(135deg, #F59C10, #F70525);
+    color: #fff;
+    border: none;
+    padding: 18px 48px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(245, 156, 16, 0.3);
+    width: fit-content;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(245, 156, 16, 0.4);
+}
+
+.add-to-cart-btn.added {
+    background: #4caf50;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+}
+
+.add-to-cart-btn.added:hover {
+    box-shadow: 0 8px 30px rgba(76, 175, 80, 0.4);
+}
+
+.add-to-cart-btn svg {
+    font-size: 1.2rem;
+}

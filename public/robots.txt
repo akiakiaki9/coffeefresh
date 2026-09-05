@@ -1,0 +1,38 @@
+# robots.txt для Городской Букет
+# Цветочный магазин в Бухаре
+
+User-Agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+Disallow: /temp/
+
+# Запрещаем индексацию дублирующихся страниц
+Disallow: /*?*
+Disallow: /*.pdf$
+Disallow: /*.doc$
+
+# Карта сайта
+Sitemap: https://coffeefresh.uz/sitemap.xml
+
+# Для Googlebot
+User-Agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Sitemap: https://coffeefresh.uz/sitemap.xml
+
+# Для Yandex
+User-Agent: Yandex
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Sitemap: https://coffeefresh.uz/sitemap.xml
+
+# Для Bing
+User-Agent: bingbot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Sitemap: https://coffeefresh.uz/sitemap.xml
