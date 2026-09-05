@@ -1,22 +1,7 @@
 {
-  "version": 2,
   "buildCommand": "npm install --ignore-scripts && npm run build",
   "installCommand": "npm install --ignore-scripts",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "devCommand": "npm run dev",
-  "env": {
-    "NEXT_PUBLIC_VERCEL_ENV": "production"
-  },
-  "functions": {
-    "api/**/*.js": {
-      "maxDuration": 10
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
-  ]
+  "devCommand": "npm run dev"
 }
