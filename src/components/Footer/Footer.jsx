@@ -28,7 +28,7 @@ export default function Footer() {
                 </div>
             </div>
             <div className="footer__bottom">
-                © {new Date().getFullYear()} Coffee Fresh. Все права защищены.
+                © 2026 Coffee Fresh. Все права защищены.
             </div>
         </footer>
     );
