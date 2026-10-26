@@ -1,0 +1,339 @@
+/* ============================================
+   БЛОКИРОВКА СКРОЛЛА (используется глобально)
+   ============================================ */
+body.no-scroll {
+  overflow: hidden;
+  /* компенсируем исчезновение скроллбара, чтобы контент не "прыгал" */
+  padding-right: var(--scrollbar-width, 0px);
+}
+
+/* ============================================
+   NAVBAR
+   ============================================ */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(248, 249, 244, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(44, 76, 59, 0.08);
+}
+
+.navbar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+/* Логотип */
+.navbar__logo {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.navbar__logo-accent {
+  color: var(--color-accent);
+  margin-left: 2px;
+  font-style: italic;
+}
+
+/* Десктопные ссылки */
+.navbar__links {
+  display: flex;
+  gap: 36px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.navbar__links a {
+  position: relative;
+  padding: 6px 0;
+  color: var(--color-primary);
+  transition: color 0.25s;
+}
+
+.navbar__links a::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-accent);
+  transition: width 0.3s, left 0.3s;
+}
+
+.navbar__links a:hover {
+  color: var(--color-accent);
+}
+
+.navbar__links a:hover::after {
+  left: 0;
+  width: 100%;
+}
+
+/* Кнопки справа */
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar__cart {
+  position: relative;
+  background: var(--color-primary);
+  color: #fff;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s, transform 0.25s;
+}
+
+.navbar__cart:hover {
+  background: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.navbar__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-bg);
+}
+
+/* Бургер — скрыт на десктопе */
+.navbar__burger {
+  display: none;
+  background: transparent;
+  color: var(--color-primary);
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.navbar__burger:hover {
+  background: rgba(44, 76, 59, 0.08);
+}
+
+/* ============================================
+   OVERLAY
+   ============================================ */
+.navbar__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.navbar__overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ============================================
+   МОБИЛЬНОЕ МЕНЮ (drawer)
+   ============================================ */
+.navbar__mobile {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 70;
+  width: 100%;
+  max-width: 380px;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  /* Safe area для iPhone с "челкой" */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.navbar__mobile--open {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.navbar__mobile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(44, 76, 59, 0.1);
+}
+
+.navbar__mobile-close {
+  background: transparent;
+  color: var(--color-primary);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.navbar__mobile-close:hover {
+  background: rgba(44, 76, 59, 0.08);
+}
+
+.navbar__mobile-links {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  gap: 0;
+}
+
+.navbar__mobile-links a {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 18px 12px;
+  font-size: 1.5rem;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--color-primary);
+  border-bottom: 1px solid rgba(44, 76, 59, 0.08);
+  transition: color 0.2s, padding-left 0.25s;
+}
+
+.navbar__mobile-links a span {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.navbar__mobile-links a:hover {
+  color: var(--color-accent);
+  padding-left: 18px;
+}
+
+.navbar__mobile-divider {
+  height: 1px;
+  margin: 12px 28px;
+  background: linear-gradient(to right,
+      transparent,
+      rgba(44, 76, 59, 0.2),
+      transparent);
+}
+
+.navbar__mobile-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 28px 20px;
+}
+
+.navbar__mobile-contacts a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.navbar__mobile-contacts a:hover {
+  color: var(--color-accent);
+}
+
+.navbar__mobile-footer {
+  margin-top: auto;
+  padding: 20px 28px;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-top: 1px solid rgba(44, 76, 59, 0.08);
+}
+
+/* ============================================
+   АДАПТИВ
+   ============================================ */
+@media (max-width: 900px) {
+  .navbar__links {
+    display: none;
+  }
+
+  .navbar__burger {
+    display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar__inner {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  .navbar__logo {
+    font-size: 1.25rem;
+  }
+
+  .navbar__cart {
+    width: 38px;
+    height: 38px;
+  }
+
+  .navbar__mobile-links a {
+    font-size: 1.3rem;
+    padding: 16px 12px;
+  }
+}
+
+.navbar__history {
+  background: transparent;
+  color: var(--color-primary);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.navbar__history:hover {
+  background: rgba(44, 76, 59, 0.08);
+  color: var(--color-accent);
+}
+
+@media (max-width: 480px) {
+  .navbar__history {
+    width: 38px;
+    height: 38px;
+  }
+}

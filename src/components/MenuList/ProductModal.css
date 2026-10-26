@@ -1,0 +1,144 @@
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal__content {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    max-width: 720px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--color-primary);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.modal__close:hover {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+.modal__image-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    /* горизонтальный прямоугольник */
+    background: #eef2e6;
+    overflow: hidden;
+}
+
+.modal__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal__body {
+    padding: 28px 30px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modal__title {
+    font-size: 2rem;
+}
+
+.modal__desc {
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.modal__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.modal__price {
+    color: var(--color-accent);
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.modal__add {
+    background: var(--color-primary);
+    color: #fff;
+    padding: 13px 26px;
+    border-radius: 50px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.modal__add:hover {
+    background: var(--color-accent);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+    .modal__body {
+        padding: 20px;
+    }
+
+    .modal__title {
+        font-size: 1.5rem;
+    }
+
+    .modal__price {
+        font-size: 1.15rem;
+    }
+}
