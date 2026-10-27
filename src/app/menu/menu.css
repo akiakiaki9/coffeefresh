@@ -1,16 +1,94 @@
 .menu-page {
-    padding: 80px 20px;
+    position: relative;
     min-height: 70vh;
+    padding: clamp(54px, 7vw, 96px) 28px clamp(70px, 9vw, 120px);
+}
+
+.menu-page__head {
+    position: relative;
+    max-width: 700px;
+    margin: 0 auto clamp(38px, 5vw, 58px);
+    text-align: center;
 }
 
 .menu-page__title {
-    font-size: 3rem;
-    text-align: center;
-    margin-bottom: 12px;
+    margin: 18px 0 16px;
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: clamp(2.6rem, 6vw, 4.6rem);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+    color: var(--color-text, #17211c);
+}
+
+.menu-page__title em {
+    color: var(--color-accent, #b9764a);
+    font-weight: 400;
+    font-style: italic;
 }
 
 .menu-page__subtitle {
-    text-align: center;
-    color: var(--color-muted);
-    margin-bottom: 50px;
+    max-width: 520px;
+    margin: 0 auto;
+    color: var(--color-muted, #6f776f);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: clamp(0.94rem, 1.5vw, 1.05rem);
+    line-height: 1.8;
+}
+
+.menu-page__decoration {
+    display: inline-block;
+    margin-top: 26px;
+    color: var(--color-primary-light, #4a7059);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    opacity: 0.8;
+}
+
+@media (min-width: 1200px) {
+    .menu-page {
+        padding-right: 40px;
+        padding-left: 40px;
+    }
+}
+
+@media (max-width: 640px) {
+    .menu-page {
+        padding: 42px 18px 76px;
+    }
+
+    .menu-page__head {
+        margin-bottom: 32px;
+    }
+
+    .menu-page__title {
+        margin-top: 16px;
+        margin-bottom: 12px;
+        font-size: clamp(2.45rem, 10vw, 3.4rem);
+    }
+
+    .menu-page__subtitle {
+        max-width: 390px;
+        font-size: 0.93rem;
+        line-height: 1.75;
+    }
+
+    .menu-page__decoration {
+        margin-top: 20px;
+        font-size: 0.6rem;
+        letter-spacing: 0.15em;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .menu-page *,
+    .menu-page *::before,
+    .menu-page *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

@@ -1,22 +1,31 @@
 "use client";
-import { useState } from 'react';
-import Navbar from '@/components/Navbar/Navbar';
-import Hero from '@/components/Hero/Hero';
-import MenuList from '@/components/MenuList/MenuList';
-import Contacts from '@/components/Contacts/Contacts';
-import CartDrawer from '@/components/CartDrawer/CartDrawer';
-import OrderHistoryDrawer from '@/components/OrderHistory/OrderHistoryDrawer';
-import OrderResultModal from '@/components/OrderResultModal/OrderResultModal';
-import Footer from '@/components/Footer/Footer';
-import { useCart } from '@/context/CartContext';
-import './page.css';
+
+import { useState } from "react";
+import Navbar from "@/components/Navbar/Navbar";
+import Hero from "@/components/Hero/Hero";
+import MenuList from "@/components/MenuList/MenuList";
+import Contacts from "@/components/Contacts/Contacts";
+import QRBlock from "@/components/QRBlock/QRBlock";
+import CartDrawer from "@/components/CartDrawer/CartDrawer";
+import OrderHistoryDrawer from "@/components/OrderHistory/OrderHistoryDrawer";
+import OrderResultModal from "@/components/OrderResultModal/OrderResultModal";
+import Footer from "@/components/Footer/Footer";
+import Reveal from "@/components/Reveal/Reveal";
+import { useCart } from "@/context/CartContext";
+import { FiArrowDownRight, FiArrowUpRight } from "react-icons/fi";
+import "./page.css";
 
 export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [result, setResult] = useState(null);
+
   const { items } = useCart();
-  const count = items.reduce((s, i) => s + i.quantity, 0);
+
+  const count = items.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
 
   return (
     <>
@@ -24,17 +33,76 @@ export default function Home() {
         onCartOpen={() => setIsCartOpen(true)}
         onHistoryOpen={() => setIsHistoryOpen(true)}
       />
-      <main>
+
+      <main className="home-page">
         <Hero />
-        <section className="home-menu container">
-          <h2 className="home-menu__title">Популярное в меню</h2>
-          <p className="home-menu__subtitle">
-            Попробуйте наши фирменные блюда и напитки
-          </p>
-          <MenuList />
+
+        <section className="section home-menu" id="popular-menu">
+          <div className="container">
+            <Reveal className="home-menu__head">
+              <div className="home-menu__heading">
+                <span className="eyebrow">
+                  Bizning menyu
+                </span>
+
+                <h2 className="home-menu__title">
+                  Yaxshi kunlar
+                  <br />
+                  <em>yaxshi ta'mdan</em>
+                  <span className="home-menu__period">.</span>
+                </h2>
+              </div>
+
+              <div className="home-menu__intro">
+                <span className="home-menu__intro-mark">
+                  CF / 01
+                </span>
+
+                <p className="home-menu__subtitle">
+                  Har bir piyolada iliqlik, har bir taomda
+                  e'tibor. O'zingizga yoqqan ta'mni tanlang
+                  va Coffee Fresh lahzalaridan zavqlaning.
+                </p>
+
+                <a
+                  href="/menu"
+                  className="home-menu__all"
+                >
+                  <span>To'liq menyu</span>
+                  <FiArrowUpRight aria-hidden="true" />
+                </a>
+              </div>
+            </Reveal>
+
+            <div className="home-menu__divider">
+              <span>FRESHLY PREPARED</span>
+              <span className="home-menu__divider-line" />
+              <span>MADE WITH CARE</span>
+            </div>
+
+            <MenuList />
+
+            <Reveal className="home-menu__bottom">
+              <span className="home-menu__bottom-note">
+                <span className="home-menu__status-dot" />
+                Har kuni siz uchun yangi tayyorlanadi
+              </span>
+
+              <a
+                href="/menu"
+                className="home-menu__bottom-link"
+              >
+                Barcha taomlarni ko'rish
+                <FiArrowDownRight aria-hidden="true" />
+              </a>
+            </Reveal>
+          </div>
         </section>
+
         <Contacts />
+        <QRBlock />
       </main>
+
       <Footer />
 
       <CartDrawer
@@ -42,15 +110,54 @@ export default function Home() {
         onClose={() => setIsCartOpen(false)}
         onResult={(r) => setResult(r)}
       />
+
       <OrderHistoryDrawer
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
       />
-      <OrderResultModal result={result} onClose={() => setResult(null)} />
+
+      <OrderResultModal
+        result={result}
+        onClose={() => setResult(null)}
+      />
 
       {count > 0 && !isCartOpen && (
-        <button className="floating-cart" onClick={() => setIsCartOpen(true)}>
-          🛒 Корзина ({count})
+        <button
+          type="button"
+          className="floating-cart"
+          onClick={() => setIsCartOpen(true)}
+          aria-label={`Savatni ochish. ${count} ta mahsulot`}
+        >
+          <span className="floating-cart__icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="10" cy="20" r="1" fill="currentColor" />
+              <circle cx="18" cy="20" r="1" fill="currentColor" />
+            </svg>
+          </span>
+
+          <span className="floating-cart__label">
+            <span className="floating-cart__caption">
+              Sizning buyurtmangiz
+            </span>
+            <span className="floating-cart__count">
+              Savat <span>({count})</span>
+            </span>
+          </span>
+
+          <span className="floating-cart__arrow">
+            <FiArrowUpRight aria-hidden="true" />
+          </span>
         </button>
       )}
     </>

@@ -1,41 +1,206 @@
-.menu-tabs {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 40px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(44, 76, 59, 0.1);
+/* =========================================================
+   COFFEE FRESH — MENU CATALOG
+   ========================================================= */
+
+.menu-tabs-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+
+    margin: 0 -28px 34px;
+    padding: 13px 0;
+
+    overflow: hidden;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+
+    background: rgba(76, 48, 34, 0.97);
+    -webkit-backdrop-filter: blur(18px) saturate(1.15);
+    backdrop-filter: blur(18px) saturate(1.15);
+
+    box-shadow: 0 8px 24px rgba(44, 28, 19, 0.12);
 }
 
+.menu-tabs {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    padding: 2px 28px;
+
+    scroll-padding-inline: 28px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+
+    user-select: none;
+    cursor: grab;
+}
+
+.menu-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.menu-tabs:active {
+    cursor: grabbing;
+}
+
+/* Category buttons */
+
 .menu-tabs__btn {
-    background: transparent;
-    color: var(--color-primary);
-    padding: 10px 20px;
-    border-radius: 50px;
+    position: relative;
+
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 43px;
+    gap: 8px;
+    padding: 11px 19px;
+
+    scroll-snap-align: start;
+
+    border: 1px solid rgba(245, 230, 213, 0.2);
+    border-radius: 5px;
+
+    background: rgba(255, 248, 239, 0.06);
+    color: #e5d5c5;
+
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 0.79rem;
     font-weight: 600;
-    font-size: 0.95rem;
-    border: 1.5px solid rgba(44, 76, 59, 0.2);
-    transition: all 0.2s;
+    line-height: 1.35;
+    white-space: nowrap;
+
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+        color 220ms ease,
+        background 220ms ease,
+        border-color 220ms ease,
+        box-shadow 220ms ease,
+        transform 250ms var(--ease, ease);
 }
 
 .menu-tabs__btn:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    border-color: rgba(224, 177, 139, 0.7);
+    background: rgba(255, 248, 239, 0.12);
+    color: #fff4e8;
 }
 
-.menu-tabs__btn--active {
-    background: var(--color-primary);
-    color: #fff;
-    border-color: var(--color-primary);
+.menu-tabs__btn:active {
+    transform: scale(0.97);
 }
 
-.menu-tabs__btn--active:hover {
-    color: #fff;
+/* Active category */
+
+.menu-tabs__btn.is-active {
+    border-color: #d9a47c;
+    background: #d9a47c;
+    color: #38251a;
+    box-shadow: 0 4px 13px rgba(20, 12, 7, 0.18);
 }
+
+.menu-tabs__btn.is-active:hover {
+    border-color: #e6b58f;
+    background: #e6b58f;
+    color: #38251a;
+}
+
+.menu-tabs__btn:focus-visible {
+    outline: 2px solid #f0c7a5;
+    outline-offset: 3px;
+}
+
+/* Menu cards grid */
 
 .menu-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 26px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 30px 22px;
+    min-width: 0;
+}
+
+/* Let each Reveal wrapper stretch to the grid cell */
+
+.menu-list>.reveal {
+    display: flex;
+    min-width: 0;
+    height: 100%;
+}
+
+.menu-list>.reveal>* {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Tablet */
+
+@media (max-width: 1024px) {
+    .menu-tabs-wrap {
+        margin-right: -28px;
+        margin-left: -28px;
+    }
+
+    .menu-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px 18px;
+    }
+}
+
+/* Small tablet and mobile */
+
+@media (max-width: 700px) {
+    .menu-tabs-wrap {
+        top: 0;
+        margin: 0 -18px 24px;
+        padding: 10px 0;
+    }
+
+    .menu-tabs {
+        gap: 7px;
+        padding-inline: 18px;
+        scroll-padding-inline: 18px;
+    }
+
+    .menu-tabs__btn {
+        min-height: 39px;
+        padding: 9px 15px;
+        font-size: 0.75rem;
+    }
+
+    .menu-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 23px 12px;
+    }
+}
+
+/* Small phones */
+
+@media (max-width: 380px) {
+    .menu-list {
+        gap: 19px 9px;
+    }
+
+    .menu-tabs__btn {
+        padding-inline: 13px;
+        font-size: 0.72rem;
+    }
+}
+
+/* Motion accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+    .menu-tabs__btn {
+        transition: none !important;
+    }
 }

@@ -16,72 +16,44 @@ export default function OrderResultModal({ result, onClose }) {
     }, [result, onClose]);
 
     if (!result) return null;
-
-    const { success, order, error } = result;
+    const { success, order, error, code } = result;
 
     return (
         <div className="ordres" onClick={onClose}>
             <div className="ordres__content" onClick={(e) => e.stopPropagation()}>
-                <button className="ordres__close" onClick={onClose} aria-label="Закрыть">
-                    <FiX size={22} />
-                </button>
-
+                <button className="ordres__close" onClick={onClose} aria-label="Yopish"><FiX size={22} /></button>
                 <div className={`ordres__icon ordres__icon--${success ? 'ok' : 'err'}`}>
                     {success ? <FiCheckCircle size={48} /> : <FiAlertCircle size={48} />}
                 </div>
-
-                <h2 className="ordres__title">
-                    {success ? 'Заказ принят!' : 'Не удалось отправить'}
-                </h2>
-
+                <h2 className="ordres__title">{success ? 'Buyurtma qabul qilindi!' : 'Yuborib boʻlmadi'}</h2>
                 {success ? (
                     <>
-                        <p className="ordres__text">
-                            Мы получили ваш заказ и свяжемся для подтверждения.
-                        </p>
+                        <p className="ordres__text">Buyurtmangiz qabul qilindi. Tasdiqlash uchun bogʻlanamiz.</p>
                         <div className="ordres__card">
-                            <div className="ordres__row">
-                                <span>Номер заказа</span>
-                                <code>{order.id}</code>
+                            <div className="ordres__row"><span>Buyurtma kodi</span><strong className="ordres__code">{code}</strong></div>
+                            <div className="ordres__row"><span>Jami</span><strong>{order.total.toLocaleString()} soʻm</strong></div>
+                            <div className="ordres__row"><span>Vaqt</span>
+                                <span>{new Date(order.createdAt).toLocaleString('uz-UZ', {
+                                    timeZone: 'Asia/Tashkent',
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                })}</span>
                             </div>
-                            <div className="ordres__row">
-                                <span>Сумма</span>
-                                <strong>{order.total.toLocaleString()} сум</strong>
-                            </div>
-                            <div className="ordres__row">
-                                <span>Время</span>
-                                <span>
-                                    {new Date(order.createdAt).toLocaleString('ru-RU', {
-                                        timeZone: 'Asia/Tashkent',
-                                    })}
-                                </span>
-                            </div>
-                            <div className="ordres__row">
-                                <span>Состав</span>
-                                <span>{order.items.length} поз.</span>
-                            </div>
+                            <div className="ordres__row"><span>Tarkib</span><span>{order.items.length} ta</span></div>
                         </div>
-                        <p className="ordres__hint">
-                            Заказ сохранён в истории на 14 дней — открыть можно в меню «История».
-                        </p>
-                        <a href="tel:+998918859999" className="ordres__phone">
-                            📞 +998 91 885 99 99
-                        </a>
+                        <p className="ordres__hint">Buyurtma 14 kun davomida «Tarix» boʻlimida saqlanadi.</p>
+                        <a href="tel:+998918859999" className="ordres__phone">📞 +998 91 885 99 99</a>
                     </>
                 ) : (
                     <>
-                        <p className="ordres__text">
-                            {error || 'Попробуйте ещё раз или позвоните нам.'}
-                        </p>
-                        <a href="tel:+998918859999" className="ordres__phone">
-                            📞 +998 91 885 99 99
-                        </a>
+                        <p className="ordres__text">{error || 'Qaytadan urinib koʻring yoki qoʻngʻiroq qiling.'}</p>
+                        <a href="tel:+998918859999" className="ordres__phone">📞 +998 91 885 99 99</a>
                     </>
                 )}
-
-                <button className="ordres__btn" onClick={onClose}>
-                    {success ? 'Отлично' : 'Понятно'}
-                </button>
+                <button className="ordres__btn" onClick={onClose}>{success ? 'Yaxshi' : 'Tushunarli'}</button>
             </div>
         </div>
     );

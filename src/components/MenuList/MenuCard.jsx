@@ -8,18 +8,16 @@ export default function MenuCard({ item, onOpenModal }) {
     const { addItem } = useCart();
 
     const handleAdd = (e) => {
-        e.stopPropagation(); // чтобы не открылась модалка
-        addItem({ id: item.id, name: item.name, price: item.price });
+        e.stopPropagation();
+        addItem({ id: item.id, name: item.name, price: item.price, image: item.image || null });
     };
 
     return (
         <article className="menu-card">
-            <div
+            <button
                 className="menu-card__image-wrap"
                 onClick={() => onOpenModal(item)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && onOpenModal(item)}
+                aria-label={`${item.name} — batafsil`}
             >
                 <img
                     src={item.image || PLACEHOLDER_IMAGE}
@@ -27,19 +25,19 @@ export default function MenuCard({ item, onOpenModal }) {
                     className="menu-card__image"
                     onError={(e) => { e.currentTarget.src = PLACEHOLDER_IMAGE; }}
                     loading="lazy"
+                    decoding="async"
                 />
-            </div>
+            </button>
             <div className="menu-card__body">
                 <h3 className="menu-card__name">{item.name}</h3>
                 <p className="menu-card__desc">{item.desc}</p>
                 <div className="menu-card__footer">
-                    <span className="menu-card__price">
-                        {item.price.toLocaleString()} сум
-                    </span>
+                    <span className="menu-card__price">{item.price.toLocaleString()} <em>soʻm</em></span>
                     <button
+                        type="button"
                         className="menu-card__add"
                         onClick={handleAdd}
-                        aria-label={`Добавить ${item.name} в корзину`}
+                        aria-label={`${item.name} savatga`}
                     >
                         <FiPlus size={18} />
                     </button>

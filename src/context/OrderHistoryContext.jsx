@@ -2,8 +2,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const OrderHistoryContext = createContext(null);
-const STORAGE_KEY = 'cf_orders_v1';
-const TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 дней
+const STORAGE_KEY = 'cf_orders_v2';
+const TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 export function OrderHistoryProvider({ children }) {
     const [orders, setOrders] = useState([]);
@@ -25,9 +25,7 @@ export function OrderHistoryProvider({ children }) {
 
     useEffect(() => {
         if (!hydrated) return;
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-        } catch { }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(orders)); } catch { }
     }, [orders, hydrated]);
 
     const addOrder = (order) => {

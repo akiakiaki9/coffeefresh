@@ -8,7 +8,6 @@ import './ProductModal.css';
 export default function ProductModal({ item, onClose }) {
     const { addItem } = useCart();
 
-    // Блокируем скролл и закрываем по Esc
     useEffect(() => {
         document.body.classList.add('no-scroll');
         const onEsc = (e) => e.key === 'Escape' && onClose();
@@ -22,17 +21,14 @@ export default function ProductModal({ item, onClose }) {
     if (!item) return null;
 
     const handleAdd = () => {
-        addItem({ id: item.id, name: item.name, price: item.price });
+        addItem({ id: item.id, name: item.name, price: item.price, image: item.image || null });
         onClose();
     };
 
     return (
         <div className="modal" onClick={onClose}>
             <div className="modal__content" onClick={(e) => e.stopPropagation()}>
-                <button className="modal__close" onClick={onClose} aria-label="Закрыть">
-                    <FiX size={22} />
-                </button>
-
+                <button className="modal__close" onClick={onClose} aria-label="Yopish"><FiX size={22} /></button>
                 <div className="modal__image-wrap">
                     <img
                         src={item.image || PLACEHOLDER_IMAGE}
@@ -41,16 +37,13 @@ export default function ProductModal({ item, onClose }) {
                         onError={(e) => { e.currentTarget.src = PLACEHOLDER_IMAGE; }}
                     />
                 </div>
-
                 <div className="modal__body">
                     <h2 className="modal__title">{item.name}</h2>
                     <p className="modal__desc">{item.desc}</p>
                     <div className="modal__footer">
-                        <span className="modal__price">
-                            {item.price.toLocaleString()} сум
-                        </span>
+                        <span className="modal__price">{item.price.toLocaleString()} soʻm</span>
                         <button className="modal__add" onClick={handleAdd}>
-                            <FiPlus size={18} /> В корзину
+                            <FiPlus size={18} /> Savatga
                         </button>
                     </div>
                 </div>

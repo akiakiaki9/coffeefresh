@@ -1,131 +1,300 @@
 "use client";
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { FiShoppingBag, FiMenu, FiX, FiClock } from 'react-icons/fi';
-import { FaInstagram, FaTelegramPlane, FaPhoneAlt } from 'react-icons/fa';
-import { useCart } from '@/context/CartContext';
-import './Navbar.css';
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  FiShoppingBag,
+  FiMenu,
+  FiX,
+  FiArrowUpRight,
+} from "react-icons/fi";
+import {
+  FaInstagram,
+  FaTelegramPlane,
+  FaPhoneAlt,
+} from "react-icons/fa";
+import { MdOutlineReceiptLong } from "react-icons/md";
+import { useCart } from "@/context/CartContext";
+import "./Navbar.css";
 
 export default function Navbar({
   onCartOpen = () => { },
   onHistoryOpen = () => { },
 }) {
   const { items } = useCart();
-  const count = items.reduce((s, i) => s + i.quantity, 0);
+
+  const count = items.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (menuOpen) {
-      document.body.classList.add('no-scroll');
+      document.body.classList.add("no-scroll");
     } else {
-      document.body.classList.remove('no-scroll');
+      document.body.classList.remove("no-scroll");
     }
-    const onEsc = (e) => e.key === 'Escape' && setMenuOpen(false);
-    window.addEventListener('keydown', onEsc);
+
+    const onEsc = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onEsc);
+
     return () => {
-      document.body.classList.remove('no-scroll');
-      window.removeEventListener('keydown', onEsc);
+      document.body.classList.remove("no-scroll");
+      window.removeEventListener("keydown", onEsc);
     };
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header className="navbar">
+    <header className={`navbar ${menuOpen ? "navbar--menu-open" : ""}`}>
       <div className="container navbar__inner">
-        <Link href="/" className="navbar__logo" onClick={closeMenu}>
-          Coffee<span className="navbar__logo-accent"> Fresh</span>
+        <Link
+          href="/"
+          className="navbar__logo"
+          onClick={closeMenu}
+          aria-label="Coffee Fresh — bosh sahifa"
+        >
+          <span className="navbar__logo-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none">
+              <path
+                d="M11 15h17v9a8.5 8.5 0 0 1-17 0v-9Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M28 18h2.5a3.5 3.5 0 0 1 0 7H28"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M15 11c-1.5-2 1.5-3 0-5m6 5c-1.5-2 1.5-3 0-5m5 5c-1.5-2 1.5-3 0-5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+
+          <span className="navbar__logo-copy">
+            <span className="navbar__logo-main">
+              Coffee<span className="navbar__logo-accent">Fresh</span>
+            </span>
+            <span className="navbar__logo-caption">
+              COFFEE · FOOD · MOMENTS
+            </span>
+          </span>
         </Link>
 
-        <nav className="navbar__links">
-          <Link href="/">Главная</Link>
-          <Link href="/menu">Меню</Link>
-          <Link href="#contacts">Контакты</Link>
+        <nav
+          className="navbar__links"
+          aria-label="Asosiy navigatsiya"
+        >
+          <Link href="/" className="navbar__link">
+            Bosh sahifa
+          </Link>
+          <Link href="/menu" className="navbar__link">
+            Menyu
+          </Link>
+          <Link href="/#contacts" className="navbar__link">
+            Kontaktlar
+          </Link>
+          <Link href="/#qr" className="navbar__link navbar__link--qr">
+            QR menyu
+            <FiArrowUpRight aria-hidden="true" />
+          </Link>
         </nav>
 
         <div className="navbar__actions">
           <button
-            className="navbar__history"
+            type="button"
+            className="navbar__icon navbar__history"
             onClick={onHistoryOpen}
-            aria-label="История заказов"
+            aria-label="Buyurtmalar tarixi"
+            title="Buyurtmalar tarixi"
           >
-            <FiClock size={20} />
+            <MdOutlineReceiptLong size={21} aria-hidden="true" />
           </button>
 
           <button
-            className="navbar__cart"
+            type="button"
+            className="navbar__icon navbar__icon--primary"
             onClick={onCartOpen}
-            aria-label="Открыть корзину"
+            aria-label={`Savatni ochish. ${count} ta mahsulot`}
+            title="Savat"
           >
-            <FiShoppingBag size={20} />
-            {count > 0 && <span className="navbar__badge">{count}</span>}
+            <FiShoppingBag size={19} aria-hidden="true" />
+
+            {count > 0 && (
+              <span className="navbar__badge">
+                {count > 99 ? "99+" : count}
+              </span>
+            )}
           </button>
 
           <button
-            className="navbar__burger"
+            type="button"
+            className="navbar__icon navbar__burger"
             onClick={() => setMenuOpen(true)}
-            aria-label="Открыть меню"
+            aria-label="Menyuni ochish"
             aria-expanded={menuOpen}
+            aria-controls="navbar-mobile-drawer"
           >
-            <FiMenu size={24} />
+            <FiMenu size={23} aria-hidden="true" />
           </button>
         </div>
       </div>
 
       <div
-        className={`navbar__overlay ${menuOpen ? 'navbar__overlay--visible' : ''}`}
+        className={`navbar__overlay ${menuOpen ? "is-open" : ""}`}
         onClick={closeMenu}
         aria-hidden="true"
       />
 
       <aside
-        className={`navbar__mobile ${menuOpen ? 'navbar__mobile--open' : ''}`}
+        id="navbar-mobile-drawer"
+        className={`navbar__drawer ${menuOpen ? "is-open" : ""}`}
+        aria-label="Mobil navigatsiya"
         aria-hidden={!menuOpen}
+        inert={!menuOpen}
       >
-        <div className="navbar__mobile-header">
-          <Link href="/" className="navbar__logo" onClick={closeMenu}>
-            Coffee<span className="navbar__logo-accent"> Fresh</span>
-          </Link>
-          <button
-            className="navbar__mobile-close"
+        <div className="navbar__drawer-head">
+          <Link
+            href="/"
+            className="navbar__logo"
             onClick={closeMenu}
-            aria-label="Закрыть меню"
           >
-            <FiX size={24} />
+            <span className="navbar__logo-icon" aria-hidden="true">
+              <svg viewBox="0 0 40 40" fill="none">
+                <path
+                  d="M11 15h17v9a8.5 8.5 0 0 1-17 0v-9Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M28 18h2.5a3.5 3.5 0 0 1 0 7H28"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M15 11c-1.5-2 1.5-3 0-5m6 5c-1.5-2 1.5-3 0-5m5 5c-1.5-2 1.5-3 0-5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+
+            <span className="navbar__logo-copy">
+              <span className="navbar__logo-main">
+                Coffee<span className="navbar__logo-accent">Fresh</span>
+              </span>
+              <span className="navbar__logo-caption">
+                COFFEE · FOOD · MOMENTS
+              </span>
+            </span>
+          </Link>
+
+          <button
+            type="button"
+            className="navbar__icon navbar__close"
+            onClick={closeMenu}
+            aria-label="Menyuni yopish"
+          >
+            <FiX size={23} aria-hidden="true" />
           </button>
         </div>
 
-        <nav className="navbar__mobile-links">
-          <Link href="/" onClick={closeMenu}>
-            <span>01</span> Главная
-          </Link>
-          <Link href="/menu" onClick={closeMenu}>
-            <span>02</span> Меню
-          </Link>
-          <Link href="#contacts" onClick={closeMenu}>
-            <span>03</span> Контакты
-          </Link>
-        </nav>
+        <div className="navbar__drawer-content">
+          <span className="navbar__drawer-eyebrow">
+            COFFEE FRESH / NAVIGATION
+          </span>
 
-        <div className="navbar__mobile-divider" />
+          <nav
+            className="navbar__drawer-links"
+            aria-label="Mobil menyu"
+          >
+            <Link href="/" onClick={closeMenu}>
+              <span className="navbar__drawer-number">01</span>
+              <span>Bosh sahifa</span>
+              <FiArrowUpRight aria-hidden="true" />
+            </Link>
 
-        <div className="navbar__mobile-contacts">
+            <Link href="/menu" onClick={closeMenu}>
+              <span className="navbar__drawer-number">02</span>
+              <span>Menyu</span>
+              <FiArrowUpRight aria-hidden="true" />
+            </Link>
+
+            <Link href="/#contacts" onClick={closeMenu}>
+              <span className="navbar__drawer-number">03</span>
+              <span>Kontaktlar</span>
+              <FiArrowUpRight aria-hidden="true" />
+            </Link>
+
+            <Link href="/#qr" onClick={closeMenu}>
+              <span className="navbar__drawer-number">04</span>
+              <span>QR menyu</span>
+              <FiArrowUpRight aria-hidden="true" />
+            </Link>
+          </nav>
+
+          <div className="navbar__drawer-quote">
+            <span className="navbar__drawer-quote-mark">“</span>
+            <p>
+              Good coffee.
+              <br />
+              Good food.
+              <br />
+              Good moments.
+            </p>
+          </div>
+        </div>
+
+        <div className="navbar__drawer-foot">
+          <span className="navbar__drawer-eyebrow">
+            BIZ BILAN BOG'LANING
+          </span>
+
           <a href="tel:+998918859999">
-            <FaPhoneAlt size={16} /> +998 91 885 99 99
+            <span className="navbar__social-icon">
+              <FaPhoneAlt aria-hidden="true" />
+            </span>
+            <span>+998 91 885 99 99</span>
+            <FiArrowUpRight aria-hidden="true" />
           </a>
-          <a href="https://t.me/coffeefreshbot" target="_blank" rel="noreferrer">
-            <FaTelegramPlane size={16} /> Telegram
+
+          <a
+            href="https://t.me/coffeefreshbot"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="navbar__social-icon">
+              <FaTelegramPlane aria-hidden="true" />
+            </span>
+            <span>Telegram</span>
+            <FiArrowUpRight aria-hidden="true" />
           </a>
+
           <a
             href="https://www.instagram.com/coffee_fresh_restaurant/"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
           >
-            <FaInstagram size={16} /> Instagram
+            <span className="navbar__social-icon">
+              <FaInstagram aria-hidden="true" />
+            </span>
+            <span>Instagram</span>
+            <FiArrowUpRight aria-hidden="true" />
           </a>
         </div>
-
-        <div className="navbar__mobile-footer">Гиждуван · Узбекистан</div>
       </aside>
     </header>
   );
