@@ -1,22 +1,37 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'node:crypto';
+import { CATEGORIES } from '@/data/menu';
 
 const TOKEN = process.env.TG_TOKEN;
 const ADMIN_CHAT_IDS = (process.env.TG_CHAT_IDS || '')
     .split(',').map((s) => s.trim()).filter(Boolean);
 
 const states = new Map();
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://coffeefresh.uz';
+const ORDER_STATE_TTL = 30 * 60 * 1000;
+const SITE_URL = new URL(
+    '/menu',
+    process.env.NEXT_PUBLIC_SITE_URL || 'https://coffeefresh.uz'
+).toString();
 const PHONE = '+998 91 885 99 99';
 const LOCATION = { lat: 40.088606, lng: 64.676131 };
 const ADDRESS_STR = 'Gʻijduvon, Oʻzbekiston';
 
 async function tg(method, body) {
+    if (!TOKEN) throw new Error('TG_TOKEN is not configured');
+
     const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${method}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(10000),
     });
-    return res.json();
+    const result = await res.json();
+
+    if (!res.ok || !result.ok) {
+        throw new Error(`Telegram ${method} failed: ${result.description || res.statusText}`);
+    }
+
+    return result;
 }
 
 const sendMessage = (chat_id, text, extra = {}) =>
@@ -26,6 +41,22 @@ const sendLocation = (chat_id, lat, lng) =>
 const answerCallback = (id) => tg('answerCallbackQuery', { callback_query_id: id });
 const esc = (s) =>
     String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function getState(chatId) {
+    const state = states.get(chatId);
+    if (!state) return null;
+
+    if (Date.now() - state.updatedAt > ORDER_STATE_TTL) {
+        states.delete(chatId);
+        return null;
+    }
+
+    return state;
+}
+
+function setState(chatId, state) {
+    states.set(chatId, { ...state, updatedAt: Date.now() });
+}
 
 const mainKeyboard = {
     keyboard: [
@@ -37,26 +68,125 @@ const mainKeyboard = {
 };
 
 const cancelKeyboard = {
-    keyboard: [[{ text: '❌ Bekor qilish' }]],
+    keyboard: [
+        [{ text: '❌ Bekor qilish' }],
+        [{ text: '🏠 Bosh menyu' }],
+    ],
     resize_keyboard: true,
 };
+
+const normalizeText = (text) =>
+    String(text ?? '')
+        .toLocaleLowerCase('uz-UZ')
+        .normalize('NFKC')
+        .replace(/[ʻʼ‘’`]/g, "'")
+        .replace(/[.!?,:;]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
 
 const welcomeText = (name) =>
     `Salom, <b>${esc(name)}</b>! 👋\n\n` +
     `Bu <b>Coffee Fresh</b> boti ☕🍰\n\n` +
-    `Gʻijduvondagi yangi qahva, shirinliklar va mualliflik taomlari.\n` +
-    `Kerakli boʻlimni tanlang — pastdagi tugmalar 👇`;
+    `Gʻijduvondagi qahva, shirinliklar va mazali taomlar.\n\n` +
+    `Menyu, buyurtma, ish vaqti yoki manzil haqida soʻrashingiz mumkin.\n` +
+    `Kerakli boʻlimni tanlang 👇`;
 
 const menuText = () =>
     `☕ <b>Bizning menyu</b>\n\n` +
-    `Qahva, shirinliklar va issiq taomlar — har kuni yangi tayyorlaymiz.\n\n` +
-    `👉 Menyuni ochish: ${SITE_URL}/menu`;
+    `Qahva, shirinliklar va issiq taomlar — har kuni yangi tayyorlaymiz.\n` +
+    `Taom nomi yoki kategoriya nomini yozsangiz, narxini topib beraman 👇`;
 
 const contactText = () =>
     `📞 <b>Biz bilan bogʻlanish</b>\n\n${PHONE}\n\n🕐 Har kuni 09:00 – 23:00`;
 
 const addressText = () =>
     `📍 <b>Biz shu yerdamiz</b>\n\n${ADDRESS_STR}\n\nQuyidagi tugma orqali marshrut quring 👇`;
+
+const helpText =
+    `Quyidagilarda yordam beraman:\n` +
+    `• menyu va taomlar narxi\n` +
+    `• buyurtma va yetkazib berish\n` +
+    `• ish vaqti, manzil va telefon\n\n` +
+    `Savolingizni yozing yoki pastdagi tugmalardan foydalaning 👇`;
+
+const faqKeyboard = {
+    inline_keyboard: [
+        [{ text: '☕ Menyuni ochish', url: SITE_URL }],
+        [{ text: '🛒 Buyurtma berish', callback_data: 'start_order' }],
+        [{ text: '📍 Manzil va ish vaqti', callback_data: 'show_address' }],
+    ],
+};
+
+const menuCategoryAliases = {
+    tea: ['tea', 'чай'],
+    coffee: ['kofe', 'coffee', 'кофе'],
+    salads: ['salad', 'salat', 'салат'],
+    soups: ['soup', 'sup', 'birinchi taom', 'суп', 'первое блюдо'],
+    main: ['ikkinchi taom', 'второе блюдо'],
+    fastfood: ['fast food', 'fastfood', 'lavash', 'burger'],
+    pizza: ['pizza', 'pitsa', 'пицца'],
+    desserts: ['desert', 'dessert', 'shirinlik', 'tort', 'десерт', 'торт'],
+    waffles: ['waffle', 'vafli', 'вафли'],
+    mojito: ['mojito', 'moxito', 'мохито', 'коктейль'],
+    juices: ['sharbat', 'juice', 'сок'],
+    bubble: ['bubble tea'],
+    shashlik: ['shashlik', 'шашлык'],
+};
+
+function getMenuAnswer(text) {
+    const query = normalizeText(text);
+    if (!query) return null;
+
+    const matchingItems = CATEGORIES.flatMap((category) =>
+        category.items
+            .filter((item) => query.includes(normalizeText(item.name)))
+            .map((item) => ({ ...item, categoryName: category.name }))
+    );
+
+    if (matchingItems.length > 0) {
+        const distinctItems = matchingItems.filter(
+            (item, index, list) =>
+                list.findIndex((candidate) => candidate.id === item.id) === index
+        );
+        const lines = distinctItems.slice(0, 6).map(
+            (item) =>
+                `• <b>${esc(item.name)}</b> — ${item.price.toLocaleString('ru-RU')} soʻm` +
+                (distinctItems.length > 1 ? ` <i>(${esc(item.categoryName)})</i>` : '')
+        );
+        const remaining = distinctItems.length - lines.length;
+
+        return (
+            `☕ <b>Menyudan topildi</b>\n\n${lines.join('\n')}` +
+            (remaining > 0 ? `\nYana ${remaining} ta mos taom bor.` : '') +
+            `\n\nNarxlar oʻzgarishi mumkin. Toʻliq menyu 👇`
+        );
+    }
+
+    const categoryMatches = CATEGORIES.flatMap((category) => {
+        const aliases = [
+            category.name,
+            ...(menuCategoryAliases[category.id] || []),
+        ].map(normalizeText);
+        return aliases
+            .filter((alias) => alias && query.includes(alias))
+            .map((alias) => ({ category, alias }));
+    }).sort((a, b) => b.alias.length - a.alias.length);
+
+    const category = categoryMatches[0]?.category;
+    if (!category) return null;
+
+    const shownItems = category.items.slice(0, 8);
+    const lines = shownItems.map(
+        (item) => `• ${esc(item.name)} — ${item.price.toLocaleString('ru-RU')} soʻm`
+    );
+    const remaining = category.items.length - shownItems.length;
+
+    return (
+        `☕ <b>${esc(category.name)}</b>\n\n${lines.join('\n')}` +
+        (remaining > 0 ? `\n…yana ${remaining} ta taom bor.` : '') +
+        `\n\nToʻliq menyu 👇`
+    );
+}
 
 async function handleStart(chatId, firstName) {
     states.delete(chatId);
@@ -65,12 +195,7 @@ async function handleStart(chatId, firstName) {
 
 async function handleMenu(chatId) {
     await sendMessage(chatId, menuText(), {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: '☕ Menyuni ochish', url: `${SITE_URL}/menu` }],
-                [{ text: '🛒 Buyurtma berish', callback_data: 'start_order' }],
-            ],
-        },
+        reply_markup: faqKeyboard,
     });
 }
 
@@ -95,49 +220,102 @@ async function handleAddress(chatId) {
 }
 
 async function handleOrderStart(chatId) {
-    states.set(chatId, { step: 'name', data: {} });
+    setState(chatId, { step: 'name', data: {} });
     await sendMessage(
         chatId,
         `🛒 <b>Buyurtma berish</b>\n\n` +
+        `Buyurtmani rasmiylashtirish uchun bir necha maʼlumot kerak boʻladi.\n` +
+        `Istalgan vaqtda «❌ Bekor qilish» tugmasini bosing.\n\n` +
         `1/4 qadam: ismingizni yozing:`,
         { reply_markup: cancelKeyboard }
     );
 }
 
-async function handleOrderStep(chatId, text, state) {
-    const { step, data } = state;
+async function handleOrderStep(chatId, text, state, message) {
+    const { step } = state;
+    const data = { ...state.data };
+    const normalized = normalizeText(text);
 
-    if (text === '❌ Bekor qilish') {
+    if (text === '❌ Bekor qilish' || text === '🏠 Bosh menyu') {
         states.delete(chatId);
-        await sendMessage(chatId, 'Buyurtma bekor qilindi ❌', { reply_markup: mainKeyboard });
+        await sendMessage(
+            chatId,
+            text === '🏠 Bosh menyu' ? 'Bosh menyu 👇' : 'Buyurtma bekor qilindi ❌',
+            { reply_markup: mainKeyboard }
+        );
         return;
     }
 
     if (step === 'name') {
+        if (text.length < 2 || text.length > 80) {
+            await sendMessage(chatId, 'Ismni 2–80 ta belgi bilan yozing, iltimos:', {
+                reply_markup: cancelKeyboard,
+            });
+            return;
+        }
         data.name = text;
-        states.set(chatId, { step: 'phone', data });
-        await sendMessage(chatId, `2/4 qadam: telefon raqamingiz?\n\nMasalan: +998901234567`);
+        await sendMessage(
+            chatId,
+            `2/4 qadam: telefon raqamingizni yuboring.\n\nMasalan: +998 90 123 45 67`,
+            {
+                reply_markup: {
+                    keyboard: [
+                        [{ text: '📱 Telefon raqamni yuborish', request_contact: true }],
+                        ...cancelKeyboard.keyboard,
+                    ],
+                    resize_keyboard: true,
+                },
+            }
+        );
+        setState(chatId, { step: 'phone', data });
         return;
     }
     if (step === 'phone') {
-        if (text.replace(/\D/g, '').length < 9) {
-            await sendMessage(chatId, '❌ Format xato. Qaytadan kiriting:');
+        const phone = message?.contact?.phone_number || text;
+        const digits = phone.replace(/\D/g, '');
+        if (digits.length < 9 || digits.length > 15) {
+            await sendMessage(chatId, '❌ Telefon raqami notoʻgʻri. Qaytadan kiriting:', {
+                reply_markup: cancelKeyboard,
+            });
             return;
         }
-        data.phone = text;
-        states.set(chatId, { step: 'address', data });
-        await sendMessage(chatId, `3/4 qadam: yetkazish manzili?\n\nManzil yoki lokatsiya yuboring 📍`);
+        data.phone = phone;
+        await sendMessage(
+            chatId,
+            `3/4 qadam: yetkazish manzilini yozing yoki lokatsiyani yuboring 📍`,
+            {
+                reply_markup: {
+                    keyboard: [
+                        [{ text: '📍 Lokatsiyani yuborish', request_location: true }],
+                        ...cancelKeyboard.keyboard,
+                    ],
+                    resize_keyboard: true,
+                },
+            }
+        );
+        setState(chatId, { step: 'address', data });
         return;
     }
     if (step === 'address') {
+        if (text.trim().length < 5) {
+            await sendMessage(chatId, 'Manzilni batafsilroq yozing yoki lokatsiyani yuboring 📍', {
+                reply_markup: cancelKeyboard,
+            });
+            return;
+        }
         data.address = text;
-        states.set(chatId, { step: 'comment', data });
-        await sendMessage(chatId, `4/4 qadam: izoh?\n\nMasalan: shakarsiz, 5 daqiqada qoʻngʻiroq qiling.\nAgar izoh yoʻq boʻlsa <b>«yoʻq»</b> deb yozing.`);
+        await sendMessage(
+            chatId,
+            `4/4 qadam: buyurtmaga izoh bormi?\n` +
+            `Masalan: shakarsiz, yetib kelganda qoʻngʻiroq qiling.\n` +
+            `Izoh boʻlmasa «Yoʻq» deb yozing.`,
+            { reply_markup: cancelKeyboard }
+        );
+        setState(chatId, { step: 'comment', data });
         return;
     }
     if (step === 'comment') {
-        data.comment = text === 'yoʻq' ? '' : text;
-        states.set(chatId, { step: 'confirm', data });
+        data.comment = ['yoq', "yo'q", 'нет', 'no'].includes(normalized) ? '' : text;
 
         const summary =
             `📋 <b>Buyurtma maʼlumotlari</b>\n\n` +
@@ -156,10 +334,15 @@ async function handleOrderStep(chatId, text, state) {
                 ],
             },
         });
+        setState(chatId, { step: 'confirm', data });
     }
 }
 
 async function sendOrderToAdmins(data, clientChatId, orderCode) {
+    if (ADMIN_CHAT_IDS.length === 0) {
+        throw new Error('TG_CHAT_IDS is not configured');
+    }
+
     let routeBlock = '';
     let inlineKeyboard = null;
     if (data.coords) {
@@ -195,47 +378,134 @@ async function sendOrderToAdmins(data, clientChatId, orderCode) {
     );
 }
 
+function getIntent(text) {
+    const normalized = normalizeText(text);
+
+    if (/(menu|menyu|taom|narx|price|цена|меню|блюд|coffee|kofe|чай|кофе)/.test(normalized)) return 'menu';
+    if (/(buyurt|zakaz|order|заказ)/.test(normalized)) return 'order';
+    if (/(yetkaz|dostav|delivery|достав)/.test(normalized)) return 'delivery';
+    if (/(vaqt|qachon|ishlay|ochiq|yopiq|soat|график|время|работ)/.test(normalized)) return 'hours';
+    if (/(manzil|adres|address|qayer|qaer|lokats|карта|адрес|где)/.test(normalized)) return 'address';
+    if (/(aloqa|telefon|raqam|tel|qong|qo'ng|boglan|contact|call|number|номер|позвон|телефон|контакт)/.test(normalized)) return 'contact';
+    if (
+        ['salom', 'assalomu alaykum', 'hello', 'привет', 'здравствуйте'].some(
+            (greeting) => normalized === greeting || normalized.startsWith(`${greeting} `)
+        )
+    ) return 'greeting';
+    if (['yordam', 'help', 'помощь', 'меню'].includes(normalized)) return 'help';
+
+    return null;
+}
+
+async function handleIntent(chatId, intent, firstName) {
+    if (intent === 'menu') return handleMenu(chatId);
+    if (intent === 'order') return handleOrderStart(chatId);
+    if (intent === 'address') return handleAddress(chatId);
+    if (intent === 'contact') return handleCall(chatId);
+    if (intent === 'greeting') {
+        await sendMessage(chatId, welcomeText(firstName), { reply_markup: mainKeyboard });
+        return;
+    }
+    if (intent === 'hours') {
+        await sendMessage(
+            chatId,
+            `🕐 <b>Ish vaqtimiz</b>\n\nHar kuni 09:00 dan 23:00 gacha ishlaymiz.\n\n` +
+            `Manzil va yoʻnalish 👇`,
+            { reply_markup: faqKeyboard }
+        );
+        return;
+    }
+    if (intent === 'delivery') {
+        await sendMessage(
+            chatId,
+            `🛵 <b>Yetkazib berish</b>\n\n` +
+            `Buyurtma berishda manzilingizni yoki lokatsiyangizni yuboring. ` +
+            `Yetkazib berish imkoniyati va shartlarini manzil bo‘yicha operatorimiz aniqlashtiradi.`,
+            { reply_markup: faqKeyboard }
+        );
+        return;
+    }
+
+    await sendMessage(chatId, helpText, { reply_markup: faqKeyboard });
+}
+
+function isValidWebhookSecret(received, expected) {
+    if (!received || !expected) return false;
+    const receivedBuffer = Buffer.from(received);
+    const expectedBuffer = Buffer.from(expected);
+    return receivedBuffer.length === expectedBuffer.length &&
+        timingSafeEqual(receivedBuffer, expectedBuffer);
+}
+
 export async function POST(req) {
     try {
+        const expectedSecret = process.env.TG_WEBHOOK_SECRET;
+        if (
+            expectedSecret &&
+            !isValidWebhookSecret(
+                req.headers.get('x-telegram-bot-api-secret-token'),
+                expectedSecret
+            )
+        ) {
+            return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const update = await req.json();
 
-        if (update.message?.location) {
-            const chatId = update.message.chat.id;
-            const state = states.get(chatId);
+        if (!update || typeof update !== 'object') {
+            return NextResponse.json({ ok: false, error: 'Invalid update' }, { status: 400 });
+        }
+
+        const msg = update.message;
+        if (msg?.chat?.id && msg.location) {
+            const chatId = msg.chat.id;
+            const state = getState(chatId);
             if (state && state.step === 'address') {
-                const { latitude, longitude } = update.message.location;
-                state.data.address = `📍 Lokatsiya: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                const { latitude, longitude } = msg.location;
+                state.data.address = '📍 Lokatsiya yuborildi';
                 state.data.coords = { lat: latitude, lng: longitude };
-                states.set(chatId, { step: 'comment', data: state.data });
-                await sendMessage(chatId, `4/4 qadam: izoh?\n\nYoki <b>«yoʻq»</b> deb yozing:`);
+                setState(chatId, { step: 'comment', data: state.data });
+                await sendMessage(
+                    chatId,
+                    `4/4 qadam: buyurtmaga izoh bormi?\n` +
+                    `Izoh boʻlmasa «Yoʻq» deb yozing.`,
+                    { reply_markup: cancelKeyboard }
+                );
             }
             return NextResponse.json({ ok: true });
         }
 
         if (update.callback_query) {
             const cb = update.callback_query;
-            const chatId = cb.message.chat.id;
+            const chatId = cb.message?.chat?.id;
             await answerCallback(cb.id);
+            if (!chatId) return NextResponse.json({ ok: true });
 
             if (cb.data === 'start_order') {
                 await handleOrderStart(chatId);
+            } else if (cb.data === 'show_address') {
+                await handleAddress(chatId);
             } else if (cb.data === 'confirm_order') {
-                const state = states.get(chatId);
+                const state = getState(chatId);
                 if (!state || state.step !== 'confirm') {
-                    await sendMessage(chatId, 'Sessiya tugadi. /start dan boshlang');
-                    return NextResponse.json({ ok: true });
+                    await sendMessage(
+                        chatId,
+                        'Sessiya buyurtmasi topilmadi yoki eskirdi. /order buyrugʻi bilan qayta boshlang.',
+                        { reply_markup: mainKeyboard }
+                    );
+                } else {
+                    const code = String(Math.floor(100000 + Math.random() * 900000));
+                    await sendOrderToAdmins(state.data, chatId, code);
+                    states.delete(chatId);
+                    await sendMessage(
+                        chatId,
+                        `✅ <b>Buyurtma qabul qilindi!</b>\n\n` +
+                        `🔖 Buyurtma kodi: <b>${code}</b>\n\n` +
+                        `Operatorimiz siz bilan bogʻlanadi.\n` +
+                        `Shoshilinch savol boʻlsa: ${PHONE}`,
+                        { reply_markup: mainKeyboard }
+                    );
                 }
-                const code = String(Math.floor(100000 + Math.random() * 900000));
-                await sendOrderToAdmins(state.data, chatId, code);
-                states.delete(chatId);
-                await sendMessage(
-                    chatId,
-                    `✅ <b>Buyurtma qabul qilindi!</b>\n\n` +
-                    `🔖 Buyurtma kodi: <b>${code}</b>\n\n` +
-                    `Tasdiqlash uchun siz bilan bogʻlanamiz.\n` +
-                    `Shoshilinch savol boʻlsa: ${PHONE}`,
-                    { reply_markup: mainKeyboard }
-                );
             } else if (cb.data === 'cancel_order') {
                 states.delete(chatId);
                 await sendMessage(chatId, 'Buyurtma bekor qilindi ❌', { reply_markup: mainKeyboard });
@@ -243,42 +513,76 @@ export async function POST(req) {
             return NextResponse.json({ ok: true });
         }
 
-        const msg = update.message;
-        if (!msg?.text) return NextResponse.json({ ok: true });
+        if (!msg?.chat?.id) return NextResponse.json({ ok: true });
 
         const chatId = msg.chat.id;
-        const text = msg.text.trim();
+        const text = String(msg.text || '').trim();
         const firstName = msg.from?.first_name || 'doʻstim';
+        const command = text.split(/\s/, 1)[0].split('@')[0].toLowerCase();
+        const orderState = getState(chatId);
 
-        if (text === '/start') return handleStart(chatId, firstName);
-        if (text === '/menu') return handleMenu(chatId);
-        if (text === '/contact') return handleCall(chatId);
-        if (text === '/address') return handleAddress(chatId);
-        if (text === '/order') return handleOrderStart(chatId);
-
-        if (text === '☕ Menyu') return handleMenu(chatId);
-        if (text === '🛒 Buyurtma berish') return handleOrderStart(chatId);
-        if (text === '📞 Qoʻngʻiroq') return handleCall(chatId);
-        if (text === '📍 Manzil') return handleAddress(chatId);
-
-        const state = states.get(chatId);
-        if (state) {
-            await handleOrderStep(chatId, text, state);
-            return NextResponse.json({ ok: true });
+        if (command === '/start') await handleStart(chatId, firstName);
+        else if (command === '/menu') await handleMenu(chatId);
+        else if (command === '/contact') await handleCall(chatId);
+        else if (command === '/address') await handleAddress(chatId);
+        else if (command === '/order') await handleOrderStart(chatId);
+        else if (command === '/help') await sendMessage(chatId, helpText, { reply_markup: faqKeyboard });
+        else if (command === '/cancel') {
+            states.delete(chatId);
+            await sendMessage(chatId, 'Buyurtma bekor qilindi ❌', { reply_markup: mainKeyboard });
+        }
+        else if (text === '☕ Menyu') await handleMenu(chatId);
+        else if (text === '🛒 Buyurtma berish') await handleOrderStart(chatId);
+        else if (text === '📞 Qoʻngʻiroq') await handleCall(chatId);
+        else if (text === '📍 Manzil') await handleAddress(chatId);
+        else if (text === '🏠 Bosh menyu') {
+            states.delete(chatId);
+            await sendMessage(chatId, welcomeText(firstName), { reply_markup: mainKeyboard });
+        }
+        else if (orderState) {
+            await handleOrderStep(chatId, text, orderState, msg);
+        }
+        else if (!text && msg.contact?.phone_number) {
+            await sendMessage(
+                chatId,
+                'Telefon raqamingizni qabul qildim. Buyurtma berish uchun tugmani bosing 👇',
+                { reply_markup: mainKeyboard }
+            );
+        }
+        else {
+            const menuAnswer = getMenuAnswer(text);
+            if (menuAnswer) {
+                await sendMessage(chatId, menuAnswer, { reply_markup: faqKeyboard });
+            } else {
+                const intent = getIntent(text);
+                if (intent) {
+                    await handleIntent(chatId, intent, firstName);
+                } else {
+                    await sendMessage(
+                        chatId,
+                        `Savolingizni toʻliqroq yozing — yordam beraman 😊\n\n${helpText}`,
+                        { reply_markup: faqKeyboard }
+                    );
+                }
+            }
         }
 
-        await sendMessage(
-            chatId,
-            `Tushunmadim 🤔\n\nPastdagi tugmalardan foydalaning 👇`,
-            { reply_markup: mainKeyboard }
-        );
         return NextResponse.json({ ok: true });
     } catch (err) {
-        console.error('[telegram webhook] error:', err);
-        return NextResponse.json({ ok: true });
+        console.error('[telegram webhook] update failed:', err);
+        return NextResponse.json({ ok: false, error: 'Webhook processing failed' }, { status: 500 });
     }
 }
 
 export async function GET() {
-    return NextResponse.json({ ok: true, service: 'coffee-fresh-webhook' });
+    const configured = Boolean(TOKEN && ADMIN_CHAT_IDS.length > 0);
+    return NextResponse.json(
+        {
+            ok: configured,
+            service: 'coffee-fresh-webhook',
+            configured,
+            webhookSecretEnabled: Boolean(process.env.TG_WEBHOOK_SECRET),
+        },
+        { status: configured ? 200 : 503 }
+    );
 }

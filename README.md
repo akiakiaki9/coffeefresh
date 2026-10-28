@@ -34,3 +34,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Telegram bot
+
+The webhook endpoint is `/api/telegram/webhook`. Configure `TG_TOKEN` and
+`TG_CHAT_IDS` (comma-separated admin chat IDs) in the deployment environment.
+After deploying the app, register the public HTTPS endpoint with Telegram using
+the Bot API `setWebhook` method. The endpoint's `GET` response reports whether
+the bot configuration is present.
+
+For production, also set `TG_WEBHOOK_SECRET` and register the same value as
+Telegram's `secret_token` when calling `setWebhook`. Keep bot tokens and webhook
+secrets out of source control and logs.
+
+Order conversations are held in process memory for up to 30 minutes. Use a
+persistent shared store before deploying to a serverless or multi-instance
+runtime so a conversation survives instance changes.
