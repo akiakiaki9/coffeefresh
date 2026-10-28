@@ -11,7 +11,7 @@ import OrderHistoryDrawer from "@/components/OrderHistory/OrderHistoryDrawer";
 import OrderResultModal from "@/components/OrderResultModal/OrderResultModal";
 import Footer from "@/components/Footer/Footer";
 import Reveal from "@/components/Reveal/Reveal";
-import { useCart } from "@/context/CartContext";
+import FloatingCart from "@/components/FloatingCart/FloatingCart";
 import { FiArrowDownRight, FiArrowUpRight } from "react-icons/fi";
 import "./page.css";
 
@@ -19,13 +19,6 @@ export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [result, setResult] = useState(null);
-
-  const { items } = useCart();
-
-  const count = items.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
 
   return (
     <>
@@ -121,45 +114,10 @@ export default function Home() {
         onClose={() => setResult(null)}
       />
 
-      {count > 0 && !isCartOpen && (
-        <button
-          type="button"
-          className="floating-cart"
-          onClick={() => setIsCartOpen(true)}
-          aria-label={`Savatni ochish. ${count} ta mahsulot`}
-        >
-          <span className="floating-cart__icon">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <circle cx="10" cy="20" r="1" fill="currentColor" />
-              <circle cx="18" cy="20" r="1" fill="currentColor" />
-            </svg>
-          </span>
-
-          <span className="floating-cart__label">
-            <span className="floating-cart__caption">
-              Sizning buyurtmangiz
-            </span>
-            <span className="floating-cart__count">
-              Savat <span>({count})</span>
-            </span>
-          </span>
-
-          <span className="floating-cart__arrow">
-            <FiArrowUpRight aria-hidden="true" />
-          </span>
-        </button>
-      )}
+      <FloatingCart
+        isCartOpen={isCartOpen}
+        onCartOpen={() => setIsCartOpen(true)}
+      />
     </>
   );
 }

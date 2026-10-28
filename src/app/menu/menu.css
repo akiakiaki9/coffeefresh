@@ -6,9 +6,43 @@
 
 .menu-page__head {
     position: relative;
-    max-width: 700px;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(340px, 42vw, 500px);
+    max-width: 100%;
     margin: 0 auto clamp(38px, 5vw, 58px);
+    padding: clamp(34px, 6vw, 76px) 24px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 28px;
+    background: #30251f;
     text-align: center;
+}
+
+.menu-page__head::before,
+.menu-page__head::after {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: "";
+}
+
+.menu-page__head::before {
+    background: url('/images/hero.png') center 54% / cover no-repeat;
+    transform: scale(1.02);
+}
+
+.menu-page__head::after {
+    background:
+        linear-gradient(115deg, rgba(22, 23, 18, 0.78), rgba(32, 25, 19, 0.4) 58%, rgba(32, 25, 19, 0.2)),
+        linear-gradient(0deg, rgba(20, 16, 13, 0.42), transparent 58%);
+}
+
+.menu-page__head .eyebrow {
+    color: #f0c39e;
 }
 
 .menu-page__title {
@@ -18,11 +52,12 @@
     font-weight: 500;
     line-height: 1.08;
     letter-spacing: -0.045em;
-    color: var(--color-text, #17211c);
+    color: #fffaf3;
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.28);
 }
 
 .menu-page__title em {
-    color: var(--color-accent, #b9764a);
+    color: #f0bd95;
     font-weight: 400;
     font-style: italic;
 }
@@ -30,7 +65,7 @@
 .menu-page__subtitle {
     max-width: 520px;
     margin: 0 auto;
-    color: var(--color-muted, #6f776f);
+    color: rgba(255, 250, 243, 0.88);
     font-family: var(--font-sans, system-ui, sans-serif);
     font-size: clamp(0.94rem, 1.5vw, 1.05rem);
     line-height: 1.8;
@@ -39,11 +74,11 @@
 .menu-page__decoration {
     display: inline-block;
     margin-top: 26px;
-    color: var(--color-primary-light, #4a7059);
+    color: #f0c39e;
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.2em;
-    opacity: 0.8;
+    opacity: 0.95;
 }
 
 @media (min-width: 1200px) {
@@ -60,6 +95,9 @@
 
     .menu-page__head {
         margin-bottom: 32px;
+        min-height: 330px;
+        padding: 34px 20px;
+        border-radius: 21px;
     }
 
     .menu-page__title {

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { FiX, FiMapPin, FiUser, FiPhone, FiMessageSquare, FiLoader } from 'react-icons/fi';
 import { useCart } from '@/context/CartContext';
 import { useOrderHistory } from '@/context/OrderHistoryContext';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import './CheckoutModal.css';
 
 export default function CheckoutModal({ isOpen, onClose, onResult }) {
@@ -17,13 +18,12 @@ export default function CheckoutModal({ isOpen, onClose, onResult }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    useBodyScrollLock(isOpen);
+
     useEffect(() => {
-        if (isOpen) document.body.classList.add('no-scroll');
-        else document.body.classList.remove('no-scroll');
         const onEsc = (e) => e.key === 'Escape' && !loading && onClose();
         window.addEventListener('keydown', onEsc);
         return () => {
-            document.body.classList.remove('no-scroll');
             window.removeEventListener('keydown', onEsc);
         };
     }, [isOpen, loading, onClose]);

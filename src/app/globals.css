@@ -96,6 +96,7 @@ body {
   font-kerning: normal;
 }
 
+html.no-scroll,
 body.no-scroll {
   overflow: hidden;
   overscroll-behavior: none;

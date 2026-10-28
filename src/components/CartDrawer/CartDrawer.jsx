@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { FiX, FiTrash2, FiShoppingBag } from 'react-icons/fi';
 import { useCart } from '@/context/CartContext';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import { PLACEHOLDER_IMAGE } from '@/data/menu';
 import './CartDrawer.css';
 import CheckoutModal from './CheckoutModal';
@@ -10,13 +11,12 @@ export default function CartDrawer({ isOpen, onClose, onResult }) {
     const { items, removeItem, updateQuantity, total } = useCart();
     const [checkoutOpen, setCheckoutOpen] = useState(false);
 
+    useBodyScrollLock(isOpen || checkoutOpen);
+
     useEffect(() => {
-        if (isOpen) document.body.classList.add('no-scroll');
-        else document.body.classList.remove('no-scroll');
         const onEsc = (e) => { if (e.key === 'Escape' && !checkoutOpen) onClose(); };
         window.addEventListener('keydown', onEsc);
         return () => {
-            document.body.classList.remove('no-scroll');
             window.removeEventListener('keydown', onEsc);
         };
     }, [isOpen, checkoutOpen, onClose]);

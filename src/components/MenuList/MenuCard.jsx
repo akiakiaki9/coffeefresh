@@ -9,11 +9,19 @@ export default function MenuCard({ item, onOpenModal }) {
 
     const handleAdd = (e) => {
         e.stopPropagation();
-        addItem({ id: item.id, name: item.name, price: item.price, image: item.image || null });
+        addItem({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image || null,
+        });
     };
 
+    // Показываем desc, если есть; иначе — категорию
+    const subtitle = item.desc || item.categoryName || '';
+
     return (
-        <article className="menu-card">
+        <article className="menu-card" data-category-id={item.categoryId}>
             <button
                 className="menu-card__image-wrap"
                 onClick={() => onOpenModal(item)}
@@ -30,9 +38,11 @@ export default function MenuCard({ item, onOpenModal }) {
             </button>
             <div className="menu-card__body">
                 <h3 className="menu-card__name">{item.name}</h3>
-                <p className="menu-card__desc">{item.desc}</p>
+                {subtitle && <p className="menu-card__desc">{subtitle}</p>}
                 <div className="menu-card__footer">
-                    <span className="menu-card__price">{item.price.toLocaleString()} <em>soʻm</em></span>
+                    <span className="menu-card__price">
+                        {item.price.toLocaleString('ru-RU')} <em>soʻm</em>
+                    </span>
                     <button
                         type="button"
                         className="menu-card__add"

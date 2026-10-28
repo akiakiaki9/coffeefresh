@@ -1,16 +1,17 @@
 "use client";
 import { useEffect } from 'react';
 import { FiCheckCircle, FiAlertCircle, FiX } from 'react-icons/fi';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import './OrderResultModal.css';
 
 export default function OrderResultModal({ result, onClose }) {
+    useBodyScrollLock(Boolean(result));
+
     useEffect(() => {
         if (!result) return;
-        document.body.classList.add('no-scroll');
         const onEsc = (e) => e.key === 'Escape' && onClose();
         window.addEventListener('keydown', onEsc);
         return () => {
-            document.body.classList.remove('no-scroll');
             window.removeEventListener('keydown', onEsc);
         };
     }, [result, onClose]);

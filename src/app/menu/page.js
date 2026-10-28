@@ -1,6 +1,6 @@
-import Navbar from '@/components/Navbar/Navbar';
 import Footer from '@/components/Footer/Footer';
 import MenuList from '@/components/MenuList/MenuList';
+import MenuPageControls from './MenuPageControls';
 import Contacts from '@/components/Contacts/Contacts';
 import QRBlock from '@/components/QRBlock/QRBlock';
 import './menu.css';
@@ -26,7 +26,7 @@ export const metadata = {
 export default function MenuPage() {
     return (
         <>
-            <Navbar />
+            <MenuPageControls />
 
             <main className="container menu-page">
                 <header className="menu-page__head">

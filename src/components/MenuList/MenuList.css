@@ -106,7 +106,10 @@
     border-color: #d9a47c;
     background: #d9a47c;
     color: #38251a;
-    box-shadow: 0 4px 13px rgba(20, 12, 7, 0.18);
+    box-shadow:
+        0 0 0 1px rgba(240, 195, 158, 0.28),
+        0 0 18px rgba(217, 164, 124, 0.42),
+        0 4px 13px rgba(20, 12, 7, 0.18);
 }
 
 .menu-tabs__btn.is-active:hover {
@@ -127,19 +130,6 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: stretch;
     gap: 30px 22px;
-    min-width: 0;
-}
-
-/* Let each Reveal wrapper stretch to the grid cell */
-
-.menu-list>.reveal {
-    display: flex;
-    min-width: 0;
-    height: 100%;
-}
-
-.menu-list>.reveal>* {
-    width: 100%;
     min-width: 0;
 }
 

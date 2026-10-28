@@ -3,19 +3,19 @@ import { useEffect } from 'react';
 import { FiX, FiCheckCircle, FiAlertCircle, FiTrash2 } from 'react-icons/fi';
 import { MdOutlineReceiptLong } from 'react-icons/md';
 import { useOrderHistory } from '@/context/OrderHistoryContext';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import { PLACEHOLDER_IMAGE } from '@/data/menu';
 import './OrderHistoryDrawer.css';
 
 export default function OrderHistoryDrawer({ isOpen, onClose }) {
     const { orders, clearHistory } = useOrderHistory();
 
+    useBodyScrollLock(isOpen);
+
     useEffect(() => {
-        if (isOpen) document.body.classList.add('no-scroll');
-        else document.body.classList.remove('no-scroll');
         const onEsc = (e) => e.key === 'Escape' && onClose();
         window.addEventListener('keydown', onEsc);
         return () => {
-            document.body.classList.remove('no-scroll');
             window.removeEventListener('keydown', onEsc);
         };
     }, [isOpen, onClose]);

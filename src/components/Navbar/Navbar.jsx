@@ -14,6 +14,7 @@ import {
   FaPhoneAlt,
 } from "react-icons/fa";
 import { MdOutlineReceiptLong } from "react-icons/md";
+import useBodyScrollLock from "@/hooks/useBodyScrollLock";
 import { useCart } from "@/context/CartContext";
 import "./Navbar.css";
 
@@ -30,13 +31,9 @@ export default function Navbar({
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (menuOpen) {
-      document.body.classList.add("no-scroll");
-    } else {
-      document.body.classList.remove("no-scroll");
-    }
+  useBodyScrollLock(menuOpen);
 
+  useEffect(() => {
     const onEsc = (event) => {
       if (event.key === "Escape") {
         setMenuOpen(false);
@@ -44,9 +41,7 @@ export default function Navbar({
     };
 
     window.addEventListener("keydown", onEsc);
-
     return () => {
-      document.body.classList.remove("no-scroll");
       window.removeEventListener("keydown", onEsc);
     };
   }, [menuOpen]);
@@ -260,7 +255,7 @@ export default function Navbar({
 
         <div className="navbar__drawer-foot">
           <span className="navbar__drawer-eyebrow">
-            BIZ BILAN BOG'LANING
+            BIZ BILAN BOG&apos;LANING
           </span>
 
           <a href="tel:+998918859999">
