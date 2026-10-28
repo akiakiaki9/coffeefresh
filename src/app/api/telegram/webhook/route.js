@@ -75,6 +75,48 @@ const cancelKeyboard = {
     resize_keyboard: true,
 };
 
+const categoryKeyboard = {
+    keyboard: [
+        ...Array.from({ length: Math.ceil(CATEGORIES.length / 2) }, (_, row) =>
+            CATEGORIES.slice(row * 2, row * 2 + 2).map((category) => ({
+                text: category.name,
+            }))
+        ),
+        [{ text: '❌ Bekor qilish' }, { text: '🏠 Bosh menyu' }],
+    ],
+    resize_keyboard: true,
+};
+
+const getItemButtonText = (item) =>
+    `${item.name} · ${item.price.toLocaleString('ru-RU')} soʻm`;
+
+const getItemKeyboard = (category) => {
+    const itemButtons = category.items.map((item) => ({
+        text: getItemButtonText(item),
+    }));
+
+    return {
+        keyboard: [
+            ...Array.from({ length: Math.ceil(itemButtons.length / 2) }, (_, row) =>
+                itemButtons.slice(row * 2, row * 2 + 2)
+            ),
+            [{ text: '⬅️ Kategoriyalar' }, { text: '🛒 Savat' }],
+            [{ text: '✅ Rasmiylashtirish' }],
+            [{ text: '❌ Bekor qilish' }, { text: '🏠 Bosh menyu' }],
+        ],
+        resize_keyboard: true,
+    };
+};
+
+const getCartKeyboard = {
+    keyboard: [
+        [{ text: '➕ Yana taom tanlash' }],
+        [{ text: '✅ Rasmiylashtirish' }],
+        [{ text: '❌ Bekor qilish' }, { text: '🏠 Bosh menyu' }],
+    ],
+    resize_keyboard: true,
+};
+
 const normalizeText = (text) =>
     String(text ?? '')
         .toLocaleLowerCase('uz-UZ')
@@ -220,15 +262,52 @@ async function handleAddress(chatId) {
 }
 
 async function handleOrderStart(chatId) {
-    setState(chatId, { step: 'name', data: {} });
+    setState(chatId, { step: 'category', data: { items: [] } });
     await sendMessage(
         chatId,
         `🛒 <b>Buyurtma berish</b>\n\n` +
-        `Buyurtmani rasmiylashtirish uchun bir necha maʼlumot kerak boʻladi.\n` +
-        `Istalgan vaqtda «❌ Bekor qilish» tugmasini bosing.\n\n` +
+        `Avval quyidagi tugmalar orqali kategoriya va taomlarni tanlang.\n` +
+        `Taom qoʻshish uchun uning tugmasini bosing:`,
+        { reply_markup: categoryKeyboard }
+    );
+}
+
+function getOrderTotal(items) {
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}
+
+function getCartSummary(items) {
+    const total = getOrderTotal(items);
+    const lines = items.map(
+        (item) =>
+            `• ${esc(item.name)} × ${item.quantity} — ` +
+            `${(item.price * item.quantity).toLocaleString('ru-RU')} soʻm`
+    );
+
+    return (
+        `🛒 <b>Savat</b>\n\n${lines.join('\n')}\n\n` +
+        `💰 <b>Jami: ${total.toLocaleString('ru-RU')} soʻm</b>`
+    );
+}
+
+async function beginCustomerDetails(chatId, state) {
+    if (!state.data.items.length) {
+        await sendMessage(
+            chatId,
+            `Savat hozircha boʻsh. Avval menyudan taom tanlang 👇`,
+            { reply_markup: categoryKeyboard }
+        );
+        return;
+    }
+
+    await sendMessage(
+        chatId,
+        `${getCartSummary(state.data.items)}\n\n` +
+        `Buyurtmani rasmiylashtirishni boshlaymiz.\n` +
         `1/4 qadam: ismingizni yozing:`,
         { reply_markup: cancelKeyboard }
     );
+    setState(chatId, { step: 'name', data: state.data });
 }
 
 async function handleOrderStep(chatId, text, state, message) {
@@ -243,6 +322,119 @@ async function handleOrderStep(chatId, text, state, message) {
             text === '🏠 Bosh menyu' ? 'Bosh menyu 👇' : 'Buyurtma bekor qilindi ❌',
             { reply_markup: mainKeyboard }
         );
+        return;
+    }
+
+    if (step === 'category') {
+        const category = CATEGORIES.find(
+            (entry) => normalizeText(entry.name) === normalized
+        );
+
+        if (!category) {
+            await sendMessage(
+                chatId,
+                `Iltimos, kategoriya tugmalaridan birini tanlang 👇`,
+                { reply_markup: categoryKeyboard }
+            );
+            return;
+        }
+
+        await sendMessage(
+            chatId,
+            `☕ <b>${esc(category.name)}</b>\n\n` +
+            `Qoʻshmoqchi boʻlgan taomingizni tanlang. ` +
+            `Savat: ${data.items.length} xil taom.`,
+            { reply_markup: getItemKeyboard(category) }
+        );
+        setState(chatId, { step: 'item', data: { ...data, categoryId: category.id } });
+        return;
+    }
+
+    if (step === 'item') {
+        if (text === '⬅️ Kategoriyalar' || text === '➕ Yana taom tanlash') {
+            await sendMessage(chatId, `Kategoriyani tanlang 👇`, {
+                reply_markup: categoryKeyboard,
+            });
+            setState(chatId, { step: 'category', data });
+            return;
+        }
+
+        if (text === '🛒 Savat') {
+            if (!data.items.length) {
+                await sendMessage(chatId, `Savat hozircha boʻsh. Taom tanlang 👇`, {
+                    reply_markup: getItemKeyboard(
+                        CATEGORIES.find((entry) => entry.id === data.categoryId)
+                    ),
+                });
+                return;
+            }
+
+            await sendMessage(chatId, getCartSummary(data.items), {
+                reply_markup: getCartKeyboard,
+            });
+            setState(chatId, { step: 'cart', data });
+            return;
+        }
+
+        if (text === '✅ Rasmiylashtirish') {
+            await beginCustomerDetails(chatId, state);
+            return;
+        }
+
+        const category = CATEGORIES.find((entry) => entry.id === data.categoryId);
+        const item = category?.items.find(
+            (entry) => getItemButtonText(entry) === text
+        );
+
+        if (!item) {
+            await sendMessage(chatId, `Taomni quyidagi tugmalardan tanlang 👇`, {
+                reply_markup: category ? getItemKeyboard(category) : categoryKeyboard,
+            });
+            return;
+        }
+
+        const selected = data.items.find((entry) => entry.id === item.id);
+        const items = selected
+            ? data.items.map((entry) =>
+                entry.id === item.id
+                    ? { ...entry, quantity: entry.quantity + 1 }
+                    : entry
+            )
+            : [...data.items, {
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: 1,
+            }];
+
+        await sendMessage(
+            chatId,
+            `✅ <b>${esc(item.name)}</b> savatga qoʻshildi.\n\n` +
+            `${getCartSummary(items)}\n\n` +
+            `Yana taom tanlang yoki rasmiylashtirishga oʻting 👇`,
+            { reply_markup: getItemKeyboard(category) }
+        );
+        setState(chatId, { step: 'item', data: { ...data, items } });
+        return;
+    }
+
+    if (step === 'cart') {
+        if (text === '➕ Yana taom tanlash') {
+            await sendMessage(chatId, `Kategoriyani tanlang 👇`, {
+                reply_markup: categoryKeyboard,
+            });
+            setState(chatId, { step: 'category', data });
+            return;
+        }
+
+        if (text === '✅ Rasmiylashtirish') {
+            await beginCustomerDetails(chatId, state);
+            return;
+        }
+
+        await sendMessage(chatId, `Savatdagi buyurtma 👇\n\n${getCartSummary(data.items)}`, {
+            reply_markup: getCartKeyboard,
+        });
         return;
     }
 
@@ -319,6 +511,7 @@ async function handleOrderStep(chatId, text, state, message) {
 
         const summary =
             `📋 <b>Buyurtma maʼlumotlari</b>\n\n` +
+            `${getCartSummary(data.items)}\n\n` +
             `👤 Ism: ${esc(data.name)}\n` +
             `📞 Telefon: ${esc(data.phone)}\n` +
             `📍 Manzil: ${esc(data.address)}\n` +
@@ -357,8 +550,15 @@ async function sendOrderToAdmins(data, clientChatId, orderCode) {
         };
     }
     const text =
-        `☕ <b>Yangi buyurtma — Telegram</b>\n\n` +
+        `☕ <b>Yangi buyurtma — Telegram bot</b>\n` +
+        `📥 <b>Manba:</b> Telegram bot\n\n` +
         `🔖 <b>Kod: ${orderCode}</b>\n\n` +
+        `🛒 <b>Buyurtma tarkibi</b>\n` +
+        `${data.items.map((item) =>
+            `• ${esc(item.name)} × ${item.quantity} — ` +
+            `${(item.price * item.quantity).toLocaleString('ru-RU')} soʻm`
+        ).join('\n')}\n` +
+        `💰 <b>Jami: ${getOrderTotal(data.items).toLocaleString('ru-RU')} soʻm</b>\n\n` +
         `👤 <b>Mijoz</b>\n` +
         `Ism: ${esc(data.name)}\n` +
         `Telefon: ${esc(data.phone)}\n` +

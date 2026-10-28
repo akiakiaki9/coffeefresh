@@ -63,6 +63,7 @@ export async function POST(req) {
 
     const text = [
       `☕ <b>Yangi buyurtma — Coffee Fresh</b>`,
+      `📥 <b>Manba:</b> Sayt (${new URL('/menu', SITE_URL).toString()})`,
       ``,
       `🔖 <b>Kod: ${orderCode}</b>`,
       ``,

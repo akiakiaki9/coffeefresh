@@ -43,6 +43,9 @@ After deploying the app, register the public HTTPS endpoint with Telegram using
 the Bot API `setWebhook` method. The endpoint's `GET` response reports whether
 the bot configuration is present.
 
+Bot orders start with category and dish selection using Telegram's chat keyboard;
+the selected items and total are included in the confirmation and admin message.
+
 For production, also set `TG_WEBHOOK_SECRET` and register the same value as
 Telegram's `secret_token` when calling `setWebhook`. Keep bot tokens and webhook
 secrets out of source control and logs.
