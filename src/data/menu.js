@@ -91,8 +91,8 @@ export const CATEGORIES = [
             { id: 57, name: 'Virezka 500gr', price: 190000, image: img(57) },
             { id: 58, name: 'Vaguri 500gr', price: 175000, image: img(58) },
             { id: 59, name: 'Jiz avashnoy 500gr', price: 160000, image: img(59) },
-            { id: 591, name: 'Katlet sirim', price: 160000, image: img(591) },
-            { id: 592, name: 'Dollar', price: 160000, image: img(592) },
+            { id: 591, name: 'Katlet sirim', price: 150000, image: img(591) },
+            { id: 592, name: 'Dollar', price: 150000, image: img(592) },
         ],
     },
     {
